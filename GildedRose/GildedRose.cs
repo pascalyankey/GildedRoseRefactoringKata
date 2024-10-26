@@ -4,6 +4,9 @@ namespace GildedRoseKata;
 
 public class GildedRose
 {
+    const int maxQuality = 50;
+    const int minQuality = 0;
+
     IList<Item> Items;
 
     public GildedRose(IList<Item> Items)
@@ -13,111 +16,169 @@ public class GildedRose
 
     public void UpdateQuality()
     {
-        const int maxQuality = 50;
-        const int minQuality = 0;
-
         foreach (var item in Items) 
         {
-            var isSulfuras = item.Name == "Sulfuras, Hand of Ragnaros";
-            var isAgedBrie = item.Name == "Aged Brie";
-            var isBackstagePasses = item.Name == "Backstage passes to a TAFKAL80ETC concert";
-
-            if (!isSulfuras)
+            if (!IsSulfuras(item))
             {
                 item.SellIn--;
 
-                var isMaxQuality = item.Quality == maxQuality;
-                var isMinQuality = item.Quality == minQuality;
-                var isPassedSellDate = item.SellIn < 0;
-                var isTenDaysSell = item.SellIn < 10 && item.SellIn > 4;
-                var isFiveDaysSell = item.SellIn < 5;
-                var exceedsTenDaysSellQualityLimit = item.Quality + 2 > 50;
-                var exceedsFiveDaysSellQualityLimit = item.Quality + 3 > 50;
-                var exceedsPassedBySellDateQualityMin = isPassedSellDate && item.Quality - 2 < minQuality;
-                var exceedsPassedBySellDateQualityMax = isPassedSellDate && item.Quality + 2 > maxQuality;
-
-                if (isAgedBrie) // Case Aged Brie
+                // Case Aged Brie
+                if (IsAgedBrie(item))
                 {
-                    if (!isMaxQuality)
-                    {
-                        if (isPassedSellDate)
-                        {
-                            if (exceedsPassedBySellDateQualityMax)
-                            {
-                                item.Quality = maxQuality;
-                            } 
-                            else
-                            {
-                                item.Quality += 2;
-                            }
-                        }
-                        else
-                        {
-                            item.Quality++;
-                        }
-                    }
+                    UpdateAgedBrie(item);
                 }
-                else if (isBackstagePasses) // Case Backstage passes to a TAFKAL80ETC concert
+                else if (IsBackstagePasses(item)) // Case Backstage passes to a TAFKAL80ETC concert
                 {
-                    if (isPassedSellDate)
-                    {
-                        item.Quality = 0;
-                    }
-                    else
-                    {
-                        if (!isMaxQuality)
-                        {
-                            if (isTenDaysSell)
-                            {
-                                if (exceedsTenDaysSellQualityLimit)
-                                {
-                                    item.Quality = maxQuality;
-                                } 
-                                else
-                                {
-                                    item.Quality += 2;
-                                }
-                            }
-                            else if (isFiveDaysSell)
-                            {
-                                if (exceedsFiveDaysSellQualityLimit)
-                                {
-                                    item.Quality = maxQuality;
-                                }
-                                else
-                                {
-                                    item.Quality += 3;
-                                }
-                            }
-                            else
-                            {
-                                item.Quality++;
-                            }
-                        }
-                    }
+                    UpdateBackStagePasses(item);
                 }
                 else // Case normal items
                 {
-                    if (!isMinQuality)
-                    {
-                        if (isPassedSellDate)
-                        {
-                            if (exceedsPassedBySellDateQualityMin)
-                            {
-                                item.Quality = minQuality;
-                            }
-                            else
-                            {
-                                item.Quality -= 2;
-                            }
-                        } 
-                        else
-                        {
-                            item.Quality--;
-                        }
-                    }
+                    UpdateNormalItem(item);
                 }
             }
         }
+    }
+
+    private static void UpdateAgedBrie(Item item)
+    {
+        if (!IsMaxQuality(item))
+        {
+            if (IsPassedSellDate(item))
+            {
+                if (ExceedsPassedBySellDateQualityMax(item))
+                {
+                    item.Quality = maxQuality;
+                }
+                else
+                {
+                    item.Quality += 2;
+                }
+            }
+            else
+            {
+                item.Quality++;
+            }
+        }
+    }
+
+    private static void UpdateBackStagePasses(Item item)
+    {
+        if (IsPassedSellDate(item))
+        {
+            item.Quality = minQuality;
+        }
+        else
+        {
+            if (!IsMaxQuality(item))
+            {
+                if (IsTenDaysSell(item))
+                {
+                    if (ExceedsTenDaysSellQualityLimit(item))
+                    {
+                        item.Quality = maxQuality;
+                    }
+                    else
+                    {
+                        item.Quality += 2;
+                    }
+                }
+                else if (IsFiveDaysSell(item))
+                {
+                    if (ExceedsFiveDaysSellQualityLimit(item))
+                    {
+                        item.Quality = maxQuality;
+                    }
+                    else
+                    {
+                        item.Quality += 3;
+                    }
+                }
+                else
+                {
+                    item.Quality++;
+                }
+            }
+        }
+    }
+
+    private static void UpdateNormalItem(Item item)
+    {
+        if (!IsMinQuality(item))
+        {
+            if (IsPassedSellDate(item))
+            {
+                if (ExceedsPassedBySellDateQualityMin(item))
+                {
+                    item.Quality = minQuality;
+                }
+                else
+                {
+                    item.Quality -= 2;
+                }
+            }
+            else
+            {
+                item.Quality--;
+            }
+        }
+    }
+
+    private static bool IsFiveDaysSell(Item item)
+    {
+        return item.SellIn < 5;
+    }
+
+    private static bool ExceedsFiveDaysSellQualityLimit(Item item)
+    {
+        return item.Quality + 3 > maxQuality;
+    }
+
+    private static bool ExceedsTenDaysSellQualityLimit(Item item)
+    {
+        return item.Quality + 2 > maxQuality;
+    }
+    private static bool IsTenDaysSell(Item item)
+    {
+        return item.SellIn < 10 && item.SellIn > 4;
+    }
+
+    private static bool IsAgedBrie(Item item)
+    {
+        return item.Name == "Aged Brie";
+    }
+
+    private static bool IsSulfuras(Item item)
+    {
+        return item.Name == "Sulfuras, Hand of Ragnaros";
+    }
+
+    private static bool IsBackstagePasses(Item item)
+    {
+        return item.Name == "Backstage passes to a TAFKAL80ETC concert";
+    }
+
+    private static bool IsMaxQuality(Item item)
+    {
+        return item.Quality == maxQuality;
+    }
+
+    private static bool IsMinQuality(Item item)
+    {
+        return item.Quality == minQuality;
+    }
+
+    private static bool IsPassedSellDate(Item item)
+    {
+        return item.SellIn < 0;
+    }
+
+    private static bool ExceedsPassedBySellDateQualityMax(Item item)
+    {
+        return IsPassedSellDate(item) && item.Quality + 2 > maxQuality;
+    }
+
+    private static bool ExceedsPassedBySellDateQualityMin(Item item)
+    {
+        return IsPassedSellDate(item) && item.Quality - 2 < minQuality;
     }
 }
